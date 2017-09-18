@@ -14,6 +14,8 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.UUID;
 
 import static android.os.Build.VERSION_CODES.M;
@@ -33,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
     Boolean bConexion = false;
 
     UUID u;
+
+    CadenaPorSocket cadenaPorSocket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +82,10 @@ public class MainActivity extends AppCompatActivity {
                         bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(UUID_BT);
                         bluetoothSocket.connect();
                         bConexion = true;
+
+                        cadenaPorSocket = new CadenaPorSocket(bluetoothSocket);
+                        cadenaPorSocket.start();
+
                         button.setText("Desconectar");
                         Toast.makeText(this, "conectado con " + UUID_BT, Toast.LENGTH_SHORT).show();
                     } catch (IOException error) {
@@ -119,4 +127,54 @@ public class MainActivity extends AppCompatActivity {
     public void buscar() {
         
     }
+
+    private class CadenaPorSocket extends Thread {
+        private final InputStream inputStream;
+        private final OutputStream outputStream;
+
+        public CadenaPorSocket(BluetoothSocket socket) {
+            bluetoothSocket = socket;
+            InputStream inputStreamTmp = null;
+            OutputStream outputStreamTmp = null;
+
+            try {
+                inputStreamTmp = socket.getInputStream();
+                outputStreamTmp = socket.getOutputStream();
+            } catch (IOException e) {
+
+            }
+
+            inputStream = inputStreamTmp;
+            outputStream = outputStreamTmp;
+
+        }
+
+        public void run() {
+            byte[] buffer = new byte[1024];
+            int bytes;
+
+            while (true) {
+                try {
+                    bytes = inputStream.read(buffer);
+                } catch (IOException e) {
+                    break;
+                }
+            }
+        }
+
+        public void enviar(String string) {
+            byte[] cadena = string.getBytes();
+            try {
+                outputStream.write(cadena);
+            } catch (IOException e) {}
+        }
+
+        public void cancel() {
+            try {
+                bluetoothSocket.close();
+            } catch (IOException e) {}
+        }
+
+    }
+
 }
