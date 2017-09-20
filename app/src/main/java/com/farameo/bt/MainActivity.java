@@ -20,6 +20,8 @@ import java.util.UUID;
 
 import static android.os.Build.VERSION_CODES.M;
 import static com.farameo.bt.R.id.btnBuscar;
+import static com.farameo.bt.R.id.btnLed1;
+import static com.farameo.bt.R.id.btnLed2;
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_ACTIVATION = 1;
@@ -35,6 +37,9 @@ public class MainActivity extends AppCompatActivity {
     Boolean bConexion = false;
 
     UUID u;
+
+    int nIncrementoLed1 = 0;
+    int nIncrementoLed2 = 0;
 
     CadenaPorSocket cadenaPorSocket;
 
@@ -119,7 +124,19 @@ public class MainActivity extends AppCompatActivity {
                     startActivityForResult(intent, REQUEST_CONECTION_BT);
                 }
 
+                break;
+            
+            case btnLed1:
+                Toast.makeText(this, "LED 1", Toast.LENGTH_SHORT).show();
+                if (bConexion) {
+                    cadenaPorSocket.enviar("led1");
+                    Toast.makeText(this, "envaido", Toast.LENGTH_SHORT).show();
+                }
 
+                break;
+
+            case btnLed2:
+                Toast.makeText(this, "LED 2", Toast.LENGTH_SHORT).show();
                 break;
         }
     }
@@ -133,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
         private final OutputStream outputStream;
 
         public CadenaPorSocket(BluetoothSocket socket) {
-            bluetoothSocket = socket;
+
             InputStream inputStreamTmp = null;
             OutputStream outputStreamTmp = null;
 
@@ -141,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
                 inputStreamTmp = socket.getInputStream();
                 outputStreamTmp = socket.getOutputStream();
             } catch (IOException e) {
+                Log.e("BT_BT", e.getMessage());
 
             }
 
@@ -152,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             byte[] buffer = new byte[1024];
             int bytes;
-
+            /*
             while (true) {
                 try {
                     bytes = inputStream.read(buffer);
@@ -160,19 +178,18 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
             }
+            */
         }
 
         public void enviar(String string) {
             byte[] cadena = string.getBytes();
             try {
                 outputStream.write(cadena);
-            } catch (IOException e) {}
-        }
+                Log.e("BT_OK", cadena + "\n");
+            } catch (IOException e) {
+                Log.e("BT_BT", e.getMessage());
 
-        public void cancel() {
-            try {
-                bluetoothSocket.close();
-            } catch (IOException e) {}
+            }
         }
 
     }
