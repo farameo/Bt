@@ -78,10 +78,6 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == Activity.RESULT_OK) {
                     MAC = data.getExtras().getString(ListaDispositivos.MAC);
                     bluetoothDevice = bluetoothAdapter.getRemoteDevice(MAC);
-                    /*
-                    ParcelUuid[] uuids = bluetoothDevice.getUuids();
-                    Log.i("BT_BT", uuids[0].getUuid().toString());
-                    */
 
                     try {
                         bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(UUID_BT);
@@ -128,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
             
             case btnLed1:
                 Toast.makeText(this, "LED 1", Toast.LENGTH_SHORT).show();
+
                 if (bConexion) {
                     cadenaPorSocket.enviar("led1");
                     Toast.makeText(this, "envaido", Toast.LENGTH_SHORT).show();
@@ -136,7 +133,10 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
             case btnLed2:
-                Toast.makeText(this, "LED 2", Toast.LENGTH_SHORT).show();
+                if (bConexion) {
+                    cadenaPorSocket.enviar("led2");
+                    Toast.makeText(this, "envaido", Toast.LENGTH_SHORT).show();
+                }
                 break;
         }
     }
@@ -171,13 +171,9 @@ public class MainActivity extends AppCompatActivity {
             byte[] buffer = new byte[1024];
             int bytes;
             /*
-            while (true) {
-                try {
-                    bytes = inputStream.read(buffer);
-                } catch (IOException e) {
-                    break;
-                }
-            }
+
+                    Esto es lo que me esta faltando Gustavo Sander, aca
+                    recibiria la respuesta desde el bluetooth.
             */
         }
 
