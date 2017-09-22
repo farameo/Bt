@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ParcelUuid;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,15 +21,18 @@ import java.io.OutputStream;
 import java.util.UUID;
 
 import static android.os.Build.VERSION_CODES.M;
-import static com.farameo.bt.R.id.btnBuscar;
-import static com.farameo.bt.R.id.btnLed1;
-import static com.farameo.bt.R.id.btnLed2;
+import static com.farameo.bt.R.id.btnConectarse;
 
 public class MainActivity extends AppCompatActivity {
+
     static final int REQUEST_ACTIVATION = 1;
     static final int REQUEST_CONECTION_BT = 2 ;
+    static final int MESSAGE_READ = 3;
     private String MAC = null;
+
     private static final UUID UUID_BT = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+
+    StringBuilder stringBuilder = new StringBuilder();
 
     Button button;
     BluetoothAdapter bluetoothAdapter;
@@ -42,13 +47,14 @@ public class MainActivity extends AppCompatActivity {
     int nIncrementoLed2 = 0;
 
     CadenaPorSocket cadenaPorSocket;
+    Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        button = (Button) findViewById(btnBuscar);
+        button = (Button) findViewById(btnConectarse);
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
@@ -57,6 +63,28 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(intent, REQUEST_ACTIVATION);
         }
+
+        handler = new Handler() {
+
+            @Override
+            public void handleMessage(Message msg) {
+                if (msg.what == MESSAGE_READ) {
+                    String string = (String) msg.obj;
+                    stringBuilder.append(string);
+
+                    int fInformacion = stringBuilder.indexOf("}");
+
+                    if (fInformacion > 0) {
+                        String sComando = stringBuilder.substring(1 , fInformacion -1);
+                        Log.i("BT_BT", sComando);
+                        stringBuilder.delete(0, fInformacion);
+
+                    }
+
+                }
+            }
+
+        };
     }
 
     @Override
@@ -105,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void ocAcciones(View v) {
+        /*
         switch (v.getId()) {
             case btnBuscar :
                 if (bConexion) {
@@ -138,12 +167,12 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "envaido", Toast.LENGTH_SHORT).show();
                 }
                 break;
+
         }
+        */
+
     }
 
-    public void buscar() {
-        
-    }
 
     private class CadenaPorSocket extends Thread {
         private final InputStream inputStream;
@@ -170,11 +199,18 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             byte[] buffer = new byte[1024];
             int bytes;
-            /*
 
-                    Esto es lo que me esta faltando Gustavo Sander, aca
-                    recibiria la respuesta desde el bluetooth.
-            */
+            while (true){
+                try {
+                    bytes = inputStream.read(buffer);
+                    String string = new String(buffer, 0, bytes);
+                    handler.obtainMessage(MESSAGE_READ, bytes, -1, string).sendToTarget();
+
+                } catch (IOException e) {
+                    break;
+
+                }
+            }
         }
 
         public void enviar(String string) {
