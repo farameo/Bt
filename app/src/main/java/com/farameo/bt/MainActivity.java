@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     static final int MESSAGE_READ = 3;
     private String MAC = null;
 
+    private final byte _BYTE = (byte) 0xAA;
     private byte CMD_LED;
 
     private static final UUID UUID_BT = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
@@ -140,15 +141,54 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        sbLed2.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                tvLed2.setText(i + "%");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                CMD_LED = (byte) 2;
+
+                if (bConexion) {
+                    enviarValor(sbLed2.getProgress());
+                }
+            }
+        });
+
+        sbLed3.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                tvLed3.setText(i + "%");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                CMD_LED = (byte) 3;
+
+                if (bConexion) {
+                    enviarValor(sbLed3.getProgress());
+                }
+            }
+        });
+
     }
 
-    private final byte _BYTE = (byte) 0xAA;
-    private final byte LENGTH_ANALOG = (byte) 3;
-    private final byte CMD_ANALOG = (byte) 1;
 
     protected void enviarValor(int valor) {
-        byte[] enviar = {_BYTE, LENGTH_ANALOG, CMD_LED, (byte) valor};
-        Log.i("BT_BT", _BYTE + "");
+        byte[] enviar = {_BYTE, CMD_LED, (byte) valor};
         cadenaPorSocket.enviar(enviar);
     }
 
