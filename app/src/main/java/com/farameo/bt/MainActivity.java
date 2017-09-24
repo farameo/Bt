@@ -13,6 +13,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -30,11 +32,21 @@ public class MainActivity extends AppCompatActivity {
     static final int MESSAGE_READ = 3;
     private String MAC = null;
 
+    private byte CMD_LED;
+
     private static final UUID UUID_BT = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
 
     StringBuilder stringBuilder = new StringBuilder();
 
+    /* controles */
+
     Button button;
+    TextView tvLed1, tvLed2, tvLed3;
+    SeekBar sbLed1, sbLed2, sbLed3;
+
+
+    /* manejo del bluetooth */
+
     BluetoothAdapter bluetoothAdapter;
     BluetoothDevice bluetoothDevice = null;
     BluetoothSocket bluetoothSocket = null;
@@ -54,7 +66,25 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        button = (Button) findViewById(btnConectarse);
+
+        /* definicion de los controles */
+        button = (Button) findViewById(R.id.btnConectarse);
+
+        tvLed1 = (TextView) findViewById(R.id.tvLed1);
+        tvLed2 = (TextView) findViewById(R.id.tvLed2);
+        tvLed3 = (TextView) findViewById(R.id.tvLed3);
+
+        sbLed1 = (SeekBar) findViewById(R.id.sbLed1);
+        sbLed2 = (SeekBar) findViewById(R.id.sbLed2);
+        sbLed3 = (SeekBar) findViewById(R.id.sbLed3);
+
+        ponerEnCeroSeekBar();
+
+        sbLed1.setMax(100);
+        sbLed2.setMax(100);
+        sbLed3.setMax(100);
+
+        /* definicion de los manejadores de BlueTooth */
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
@@ -63,6 +93,8 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(intent, REQUEST_ACTIVATION);
         }
+
+        /* Handler que va a ejecutarse cada vez que se devuelvan datos desde Arduino */
 
         handler = new Handler() {
 
@@ -85,6 +117,45 @@ public class MainActivity extends AppCompatActivity {
             }
 
         };
+
+        /* seek bar */
+
+        sbLed1.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                tvLed1.setText(i + "%");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                CMD_LED = (byte) 1;
+
+                if (bConexion) {
+                    enviarValor(sbLed1.getProgress());
+                }
+            }
+        });
+    }
+
+    private final byte _BYTE = (byte) 0xAA;
+    private final byte LENGTH_ANALOG = (byte) 3;
+    private final byte CMD_ANALOG = (byte) 1;
+
+    protected void enviarValor(int valor) {
+        byte[] enviar = {_BYTE, LENGTH_ANALOG, CMD_LED, (byte) valor};
+        Log.i("BT_BT", _BYTE + "");
+        cadenaPorSocket.enviar(enviar);
+    }
+
+    protected void ponerEnCeroSeekBar() {
+        tvLed1.setText("apagado");
+        tvLed2.setText("apagado");
+        tvLed3.setText("apagado");
     }
 
     @Override
@@ -133,9 +204,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void ocAcciones(View v) {
-        /*
         switch (v.getId()) {
-            case btnBuscar :
+            case btnConectarse :
                 if (bConexion) {
                     try {
                         bluetoothSocket.close();
@@ -150,26 +220,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 break;
-            
-            case btnLed1:
-                Toast.makeText(this, "LED 1", Toast.LENGTH_SHORT).show();
-
-                if (bConexion) {
-                    cadenaPorSocket.enviar("led1");
-                    Toast.makeText(this, "envaido", Toast.LENGTH_SHORT).show();
-                }
-
-                break;
-
-            case btnLed2:
-                if (bConexion) {
-                    cadenaPorSocket.enviar("led2");
-                    Toast.makeText(this, "envaido", Toast.LENGTH_SHORT).show();
-                }
-                break;
 
         }
-        */
 
     }
 
@@ -187,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
                 inputStreamTmp = socket.getInputStream();
                 outputStreamTmp = socket.getOutputStream();
             } catch (IOException e) {
-                Log.e("BT_BT", e.getMessage());
+                Log.i("BT_OK", e.getMessage());
 
             }
 
@@ -213,11 +265,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        public void enviar(String string) {
-            byte[] cadena = string.getBytes();
+        public void enviar(byte[] valor) {
             try {
-                outputStream.write(cadena);
-                Log.e("BT_OK", cadena + "\n");
+                outputStream.write(valor);
             } catch (IOException e) {
                 Log.e("BT_BT", e.getMessage());
 
